@@ -49,8 +49,8 @@ void loop() {
 // Borref gave me the inspiration for this approach
 void moveArm() {
 	bool completed[] = {false, false, false, false}; // bool to check if all servos are in position
-  long prevTime = millis();
-  int pos;
+	long prevTime = millis();
+	int pos;
   
 	//Loops until all the servos have reached thier desired position
 	while (!completed[0] && !completed[1] && !completed[2]){
