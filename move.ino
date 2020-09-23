@@ -2,103 +2,71 @@
 #include <math.h>
 
 // initalize vars
-int angle1;
-int angle2;
-int angle3;
-int angle4;
+int angles[] = {90, 90, 90, 90}; // Edit these if you want to change the starting position of the arm
 
 float arm1 = 100.0;
 float arm2 = 100.0;
 float endEffector = 0; // Update with the length from the grapsing point to the pivot
 int servoSpeed = 50; // Change this to incease or decrease speed of movement
 
+
 //Servos to be used
-Servo servo1;
-Servo servo2;
-Servo servo3;
-Servo servo4;
+Servo servos[4];
+// servos[0] Base rotation
+// servos[1] Main arm pivot
+// servos[2] Middle joint 
+// servos[3] End effector orientation
 
 void setup() {
 	// attach the servos to specified pins on arduino
-	servo1.attach(6);
-	servo2.attach(9);
-	servo3.attach(10);
-	servo4.attach(11);
+	servos[0].attach(6);
+	servos[1].attach(9);
+	servos[2].attach(10);
+	servos[3].attach(11);
 
-	servo1.write(90);
-	servo2.write(90);
-	servo3.write(90);
+	moveArm(); // Initializes arm into starting position
 }
 
 void loop() {
 	// put your main code here, to run repeatedly:
 	//getCoordinates();
-	calculateMove(0, 175, -25);
+	calculateMove(-500, 200, -50);
 	moveArm();
 	
 	delay(1000);
 	
-	calculateMove(175, 175, 0);
+	calculateMove(150, 100, 0);
 	moveArm();
 	delay(1000);
 }
 
+// Gets the position data for the x,y,z points
+// Y >= 0; 
+//void getXYZ() {
+//}
+
 // Uses updated values for theta 1 through 4 and moves servos accordingly
 // Borref gave me the inspiration for this approach
 void moveArm() {
-  bool complete1 = false;
-  bool complete2 = false;
-  bool complete3 = false;
-  bool complete4 = true; //Change to false once end effector is installed
+	bool completed[] = {false, false, false, false}; // bool to check if all servos are in position
   long prevTime = millis();
+  int pos;
   
 	//Loops until all the servos have reached thier desired position
-	while (!complete1 && !complete2 && !complete3){
+	while (!completed[0] && !completed[1] && !completed[2]){
 		if (millis() - prevTime > servoSpeed) {
 			prevTime = millis();
-			
-			// Moving servo 1
-			if (angle1 > servo1.read()) {
-				servo1.write(servo1.read() + 1);
-			}
-			else if (angle1 < servo1.read()) {
-				servo1.write(servo1.read() - 1);
-			}
-			else {
-				complete1 = true;
-			}
-			
-			// Moving servo 2
-			if (angle2 > servo2.read()) {
-				servo2.write(servo2.read() + 1);
-			}
-			else if (angle2 < servo2.read()) {
-				servo2.write(servo2.read() - 1);
-			}
-			else {
-				complete2 = true;
-			}
-			
-			// Moving servo 3
-			if (angle3 > servo3.read()) {
-				servo3.write(servo3.read() + 1);
-			}
-			else if (angle3 < servo3.read()) {
-				servo3.write(servo3.read() - 1);
-			}
-			else {
-				complete3 = true;
-			}
-			
-			//Moving servo 4
-			if (angle4 > servo4.read()) {
-				servo4.write(servo4.read() + 1);
-			}
-			else if (angle4 < servo4.read()) {
-				servo4.write(servo4.read() - 1);
-			}
-			else {
-				complete4 = true;
+			for (byte i = 0; i < 4; i++) {
+				pos = servos[i].read();
+				if (angles[i] > pos) {
+					servos[i].write(pos + 1);
+				}
+				else if (angles[i] < pos) {
+					servos[i].write(pos - 1);
+				}
+				else {
+					completed[i] = true;
+				}
 			}
 		}
 	}
@@ -131,8 +99,18 @@ void calculateMove(int x, int y, int z) {
 	theta3 = phi1 * 180.0 / M_PI_2;
 
 	//Updating angles of the servos
-	angle1 = round(180 - theta1);
-	angle2 = round(theta2 * 2);
-	angle3 = round((theta3 - 52.5) * 180 / 127.5);
-	angle4 = 0;
+	angles[0] = round(180 - theta1);
+	angles[1] = round(theta2 * 2);
+	angles[2] = round((theta3 - 52.5) * 180 / 127.5);
+	angles[3] = 0;
+
+ //Checks to ensure robot doesn't extend past limits, other checking is implemented in get xyz
+ for (byte i = 0; i < 4; i++) {
+	if (angles[i] >= 180) {
+		angles[i] = 179;
+	}
+	else if (angles[i] <= 0) {
+		angles[i] = 1;
+	}
+ }
 }
